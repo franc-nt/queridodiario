@@ -294,22 +294,50 @@ Ordem pensada para chegar na tela de preenchimento funcionando o mais rapido pos
 - **Link de teste**: `http://localhost:5173/painel#token=<token>` (o token e o que foi impresso pelo seed, rodar `npm run db:seed` para obter um novo).
 - **Para a Etapa 4**: a rota `/` (home.tsx) ainda mostra o Welcome do template. Na Etapa 4, substituir por redirect para `/login` ou `/diarios`. Os arquivos `app/lib/auth.server.ts`, `sessions.server.ts` e `require-auth.server.ts` ainda nao existem. A porta de dev pode ser 5173 (Vite) em vez de 8787 (Wrangler) dependendo de como rodar — verificar com `npm run dev`.
 
-### Etapa 4 - Auth + Login (admin)
+### Etapa 4 - Auth + Login (admin) ✅
 - `app/lib/auth.server.ts`, sessions, require-auth
 - Rotas `/login`, `/logout`
 - `/` redireciona para `/login` ou `/diarios`
 
-### Etapa 5 - CRUD Diarios
+**Notas pos-implementacao:**
+- `app/lib/sessions.server.ts`: usa `createCookieSessionStorage` do React Router. Cookie `__qd_session`, httpOnly, secure, sameSite=lax, 30 dias de duracao. Recebe `secret` como parametro (factory) porque no Cloudflare Workers o env so e acessivel no contexto do request.
+- `app/lib/auth.server.ts`: exporta `login(db, email, password)` (valida com `bcrypt-ts`), `getUserId(request, sessionStorage)`, `createUserSession(sessionStorage, userId, redirectTo)` e `destroyUserSession(request, sessionStorage)`.
+- `app/lib/require-auth.server.ts`: exporta `requireAuth(request, sessionSecret)` que retorna `userId` ou faz `throw redirect("/login")`. Uso nos loaders/actions das rotas admin: `const userId = await requireAuth(request, context.cloudflare.env.SESSION_SECRET)`.
+- `app/routes/login.tsx`: loader verifica se ja esta logado (redireciona para `/diarios`). Action valida email/senha via `login()` e cria sessao. UI com form simples (email + senha), mensagem de erro inline, estado de submitting.
+- `app/routes/logout.tsx`: action destroi sessao e redireciona para `/login`. Loader (GET) tambem redireciona para `/login` (seguranca).
+- `app/routes/home.tsx`: agora so tem loader que verifica sessao e faz redirect para `/diarios` (logado) ou `/login` (nao logado). Componente Welcome do template foi removido.
+- **Para a Etapa 5**: usar `requireAuth(request, context.cloudflare.env.SESSION_SECRET)` nos loaders/actions das rotas de diarios. A rota `/diarios` ainda nao existe — ao acessar sera 404. Criar o layout `diarios.tsx` com `<Outlet />` e header com botao de logout (fazer `<Form method="post" action="/logout">`). O `userId` retornado por `requireAuth` e o `tenant.id` — usar para filtrar diarios por tenant. A senha do seed e `teste123` e o email e `francisconetoemail@gmail.com`.
+
+### Etapa 5 - CRUD Diarios ✅
 - Lista de diarios (cards)
 - Criar diario → gera token + 3 rotinas default
 - Editar diario (mostrar link do painel copiavel)
 - Deletar diario
 
-### Etapa 6 - CRUD Rotinas
+**Notas pos-implementacao:**
+- `routes.ts` atualizado com rotas aninhadas: `diarios.tsx` (layout) > `_index`, `novo`, `$diarioId` > `_index`, `editar`.
+- `diarios.tsx`: layout autenticado com header sticky (app name + botao logout). Usa `requireAuth` no loader. Todas as sub-rotas herdam a autenticacao.
+- `diarios._index.tsx`: lista de diarios do tenant como cards (grid responsivo 1/2/3 colunas). Cards linkam para `/diarios/:id` (rotinas). Botao "+ Novo Diario" no topo.
+- `diarios.novo.tsx`: form com campos nome + emoji. Action cria o diario com `crypto.randomUUID()` como access_token e insere 3 rotinas padrao (Manha ☀️, Tarde 🌤️, Noite 🌙) automaticamente. Redireciona para `/diarios/:id` apos criacao.
+- `diarios.$diarioId.tsx`: layout do diario. Loader valida que o diario pertence ao tenant (retorna 404 se nao). Mostra breadcrumb (Diarios / emoji+nome) e link "Editar". Renderiza `<Outlet />`.
+- `diarios.$diarioId._index.tsx`: lista as rotinas do diario como cards (nome + icon + sort_order). Placeholder para Etapa 6 — nao tem CRUD de rotinas ainda, apenas exibicao.
+- `diarios.$diarioId.editar.tsx`: form de edicao (nome + emoji) com actions via `intent`: `update` (salva), `delete` (remove diario + cascade), `regenerate-token` (novo UUID). Mostra link do painel copiavel com botao "Copiar" (usa `navigator.clipboard`). Zona de perigo com confirmacao de delete em 2 passos.
+- Todas as rotas verificam ownership (tenant_id = userId) em loaders e actions. Cascade deletes no schema garantem limpeza automatica de rotinas/atividades/completions ao deletar diario.
+- **Para a Etapa 6**: a rota `diarios.$diarioId._index.tsx` ja lista rotinas do diario. Implementar CRUD: criar `diarios.$diarioId.rotinas.nova.tsx` e `diarios.$diarioId.rotinas.$rotinaId.editar.tsx`. Adicionar actions de criar/editar/deletar rotina. Adicionar reordenacao (seta cima/baixo ou drag-and-drop) que atualiza `sort_order` via action. A rota de layout `diarios.$diarioId.tsx` ja carrega dados do diario e valida ownership — as sub-rotas de rotinas podem aproveitar isso. Lembrar de adicionar as novas rotas em `routes.ts` dentro do array de children de `:diarioId`.
+
+### Etapa 6 - CRUD Rotinas ✅
 - Lista de rotinas do diario (cards ordenados por sort_order)
 - Criar, editar, deletar rotina
 - Reordenar rotinas (drag-and-drop ou botoes seta cima/baixo nos cards)
 - Atualizar sort_order via action ao reordenar
+
+**Notas pos-implementacao:**
+- `routes.ts` atualizado com 2 novas rotas dentro de `:diarioId`: `rotinas/nova` e `rotinas/:rotinaId/editar`.
+- `diarios.$diarioId._index.tsx`: agora tem `action` com intents `move-up` e `move-down` que trocam o `sort_order` entre duas rotinas adjacentes. Cards em layout vertical (lista, nao grid) com setas ▲/▼ a esquerda e link "Editar" a direita. Botao "+ Nova Rotina" no topo.
+- `diarios.$diarioId.rotinas.nova.tsx`: form com campos nome + emoji. Action calcula `max(sort_order) + 1` para colocar a nova rotina no final. Redireciona para `/diarios/:diarioId` apos criacao.
+- `diarios.$diarioId.rotinas.$rotinaId.editar.tsx`: form de edicao (nome + emoji) com intents `update` e `delete`. Zona de perigo com confirmacao em 2 passos (mesmo padrao da edicao de diario). Cascade delete remove atividades e completions junto.
+- Todas as rotas verificam ownership do diario (tenant_id = userId) em loaders e actions. Rotinas sao verificadas via `diary_id = params.diarioId`.
+- **Para a Etapa 7**: a rota kanban sera `diarios.$diarioId.rotinas.$rotinaId.tsx` (ja prevista no plano). Precisa adicionar em `routes.ts` dentro dos children de `:diarioId`: `route("rotinas/:rotinaId", "routes/diarios.$diarioId.rotinas.$rotinaId.tsx")`. Os cards de rotina em `_index.tsx` devem linkar para `/diarios/:diarioId/rotinas/:rotinaId` (o kanban). Atualmente os cards so tem link "Editar" — adicionar um `<Link>` no card inteiro ou no nome para abrir o kanban. A rota de editar atividade sera `rotinas/:rotinaId/atividades/:atividadeId/editar` e a de criar sera `rotinas/:rotinaId/atividades/nova`. A lib `@hello-pangea/dnd` precisa ser instalada (`npm install @hello-pangea/dnd`). O schema `activity_days` ja tem `sort_order` por dia — o drag-and-drop deve atualizar essa coluna.
 
 ### Etapa 7 - Kanban de Atividades
 - Instalar @hello-pangea/dnd

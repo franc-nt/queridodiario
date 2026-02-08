@@ -1,17 +1,12 @@
+import { redirect } from "react-router";
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import { createSessionStorage } from "../lib/sessions.server";
+import { getUserId } from "../lib/auth.server";
 
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
-}
-
-export function loader({ context }: Route.LoaderArgs) {
-  return { message: context.cloudflare.env.VALUE_FROM_CLOUDFLARE };
-}
-
-export default function Home({ loaderData }: Route.ComponentProps) {
-  return <Welcome message={loaderData.message} />;
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const sessionStorage = createSessionStorage(
+    context.cloudflare.env.SESSION_SECRET
+  );
+  const userId = await getUserId(request, sessionStorage);
+  throw redirect(userId ? "/diarios" : "/login");
 }
