@@ -66,6 +66,7 @@ export const activities = pgTable("activities", {
   icon: text("icon"),
   points: integer("points").default(1).notNull(),
   type: activityTypeEnum("type").notNull(),
+  scheduledTime: text("scheduled_time"), // "HH:MM" ou null
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

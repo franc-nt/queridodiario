@@ -45,6 +45,9 @@ export function ActivityCardBinary({
           isCompleted ? "line-through text-gray-400" : "text-gray-800"
         }`}
       >
+        {activity.scheduledTime && (
+          <span className="text-sm text-violet-400 font-normal">{activity.scheduledTime} · </span>
+        )}
         {activity.title} ({activity.points} pontos)
       </p>
 

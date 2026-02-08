@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { PointsCounter } from "../components/PointsCounter";
 import { RoutineSection } from "../components/RoutineSection";
+import { DaySummary } from "../components/DaySummary";
 
 // Types exported for use in components
 export interface Completion {
@@ -15,6 +16,7 @@ export interface Activity {
   icon: string;
   points: number;
   type: "binary" | "incremental";
+  scheduledTime: string | null;
   sortOrder: number;
   completions: Completion[];
 }
@@ -165,9 +167,12 @@ export default function Painel() {
 
   const allComplete = routinesWithActivities.every(isRoutineComplete);
 
+  const showingSummary = viewingRoutineId === "__summary__";
+
   // If user clicked a pill, show that routine; otherwise show the active one
-  const viewingRoutine =
-    viewingRoutineId
+  const viewingRoutine = showingSummary
+    ? null
+    : viewingRoutineId
       ? routinesWithActivities.find((r) => r.id === viewingRoutineId) ?? activeRoutine
       : activeRoutine;
 
@@ -181,7 +186,7 @@ export default function Painel() {
     <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-2xl">{data.diary.avatar}</span>
@@ -221,12 +226,12 @@ export default function Painel() {
       </header>
 
       {/* Routine progress indicators */}
-      {routinesWithActivities.length > 1 && (
-        <div className="max-w-lg mx-auto px-4 pt-4">
-          <div className="flex items-center gap-2 justify-center">
+      {routinesWithActivities.length > 0 && (
+        <div className="max-w-2xl mx-auto px-4 pt-4">
+          <div className="flex items-center gap-2 justify-center flex-wrap">
             {routinesWithActivities.map((r) => {
               const complete = isRoutineComplete(r);
-              const isViewing = r.id === viewingRoutine?.id;
+              const isViewing = !showingSummary && r.id === viewingRoutine?.id;
               return (
                 <button
                   key={r.id}
@@ -247,13 +252,29 @@ export default function Painel() {
                 </button>
               );
             })}
+            <button
+              onClick={() => setViewingRoutineId("__summary__")}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all touch-manipulation ${
+                showingSummary
+                  ? "bg-violet-100 text-violet-700 ring-2 ring-violet-300"
+                  : "bg-gray-100 text-gray-500"
+              }`}
+            >
+              <span>📋</span>
+              <span>Resumo</span>
+            </button>
           </div>
         </div>
       )}
 
       {/* Current routine */}
-      <main className="max-w-lg mx-auto px-4 pt-4 space-y-6">
-        {!viewingRoutine ? (
+      <main className="max-w-2xl mx-auto px-4 pt-4 space-y-6">
+        {showingSummary ? (
+          <DaySummary
+            routines={routinesWithActivities}
+            totalPoints={data.totalPoints}
+          />
+        ) : !viewingRoutine ? (
           <div className="text-center py-12">
             <span className="text-4xl block mb-3">📭</span>
             <p className="text-gray-500">

@@ -44,6 +44,9 @@ export function ActivityCardIncremental({
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
           <p className="text-base font-medium text-gray-800 truncate">
+            {activity.scheduledTime && (
+              <span className="text-sm text-violet-400 font-normal">{activity.scheduledTime} · </span>
+            )}
             {activity.title} ({activity.points} pontos)
           </p>
           {clickCount > 0 && (

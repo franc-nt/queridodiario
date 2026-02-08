@@ -81,6 +81,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
           icon: activity.icon,
           points: activity.points,
           type: activity.type,
+          scheduledTime: activity.scheduledTime,
           sortOrder: dayInfo?.sortOrder ?? 0,
           completions: dayCompletions.map((c) => ({
             id: c.id,
