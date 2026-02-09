@@ -147,7 +147,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   // Update
   const title = String(formData.get("title") ?? "").trim();
   const icon = String(formData.get("icon") ?? "").trim() || "📌";
-  const points = Math.max(1, Number(formData.get("points")) || 1);
+  const points = Math.max(0, Number(formData.get("points")) || 0);
   const type = String(formData.get("type")) as "binary" | "incremental";
   const scheduledTime =
     String(formData.get("scheduledTime") ?? "").trim() || null;
@@ -282,7 +282,7 @@ export default function EditarAtividade() {
               id="points"
               name="points"
               type="number"
-              min="1"
+              min="0"
               defaultValue={activity.points}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-gray-900"
             />

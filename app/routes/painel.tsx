@@ -7,6 +7,7 @@ import { DaySummary } from "../components/DaySummary";
 export interface Completion {
   id: string;
   value: number;
+  comment?: string | null;
   createdAt: string;
 }
 

@@ -102,6 +102,7 @@ export function DaySummary({ routines, totalPoints, note, date, token, onNoteSav
                 const completion = activity.completions[0];
                 const isCompleted = isBinary && !!completion;
                 const didIt = isCompleted && completion.value > 0;
+                const isSkipped = isCompleted && completion.value === 0;
 
                 // Incremental stats
                 const incTotal = activity.completions.reduce(
@@ -121,9 +122,11 @@ export function DaySummary({ routines, totalPoints, note, date, token, onNoteSav
                         ? activity.icon
                         : isBinary
                           ? isCompleted
-                            ? didIt
-                              ? "✅"
-                              : "❌"
+                            ? isSkipped
+                              ? "➖"
+                              : didIt
+                                ? "✅"
+                                : "❌"
                             : "⬜"
                           : "📊"}
                     </span>
@@ -151,16 +154,20 @@ export function DaySummary({ routines, totalPoints, note, date, token, onNoteSav
                       <span
                         className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
                           isCompleted
-                            ? didIt
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-red-100 text-red-600"
+                            ? isSkipped
+                              ? "bg-gray-100 text-gray-500"
+                              : didIt
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-red-100 text-red-600"
                             : "bg-gray-100 text-gray-400"
                         }`}
                       >
                         {isCompleted
-                          ? didIt
-                            ? `+${activity.points}`
-                            : `-${activity.points}`
+                          ? isSkipped
+                            ? "pulou"
+                            : didIt
+                              ? `+${activity.points}`
+                              : `-${activity.points}`
                           : "pendente"}
                       </span>
                     ) : (

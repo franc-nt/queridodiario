@@ -100,6 +100,7 @@ export const completions = pgTable(
       .notNull(),
     date: date("date").notNull(),
     value: integer("value").notNull(),
+    comment: text("comment"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

@@ -25,10 +25,11 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   const body = await request.json();
-  const { activityId, date, value } = body as {
+  const { activityId, date, value, comment } = body as {
     activityId: string;
     date: string;
     value: number;
+    comment?: string;
   };
 
   if (!activityId || !date || value === undefined) {
@@ -66,6 +67,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         diaryId: diary.id,
         date,
         value,
+        comment: comment || null,
       })
       .returning();
 
@@ -79,6 +81,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         diaryId: diary.id,
         date,
         value,
+        comment: comment || null,
       })
       .returning();
 

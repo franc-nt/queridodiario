@@ -87,6 +87,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
           completions: dayCompletions.map((c) => ({
             id: c.id,
             value: c.value,
+            comment: c.comment,
             createdAt: c.createdAt,
           })),
         };
