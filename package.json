@@ -17,6 +17,7 @@
     "db:seed": "npx tsx app/db/seed.ts"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "@neondatabase/serverless": "^1.0.2",
     "bcrypt-ts": "^8.0.1",
     "drizzle-orm": "^0.45.1",

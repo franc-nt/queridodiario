@@ -339,12 +339,24 @@ Ordem pensada para chegar na tela de preenchimento funcionando o mais rapido pos
 - Todas as rotas verificam ownership do diario (tenant_id = userId) em loaders e actions. Rotinas sao verificadas via `diary_id = params.diarioId`.
 - **Para a Etapa 7**: a rota kanban sera `diarios.$diarioId.rotinas.$rotinaId.tsx` (ja prevista no plano). Precisa adicionar em `routes.ts` dentro dos children de `:diarioId`: `route("rotinas/:rotinaId", "routes/diarios.$diarioId.rotinas.$rotinaId.tsx")`. Os cards de rotina em `_index.tsx` devem linkar para `/diarios/:diarioId/rotinas/:rotinaId` (o kanban). Atualmente os cards so tem link "Editar" — adicionar um `<Link>` no card inteiro ou no nome para abrir o kanban. A rota de editar atividade sera `rotinas/:rotinaId/atividades/:atividadeId/editar` e a de criar sera `rotinas/:rotinaId/atividades/nova`. A lib `@hello-pangea/dnd` precisa ser instalada (`npm install @hello-pangea/dnd`). O schema `activity_days` ja tem `sort_order` por dia — o drag-and-drop deve atualizar essa coluna.
 
-### Etapa 7 - Kanban de Atividades
+### Etapa 7 - Kanban de Atividades ✅
 - Instalar @hello-pangea/dnd
 - Tela kanban: 7 colunas (Seg-Dom)
 - Drag-and-drop para reordenar
 - Cadastrar atividade: nome, pontos, tipo, dias
 - Editar e deletar atividade
+
+**Notas pos-implementacao:**
+- `@hello-pangea/dnd` instalado como dependencia (drag-and-drop compativel com React 19).
+- `routes.ts` atualizado com 3 novas rotas dentro de `:diarioId`: `rotinas/:rotinaId` (kanban), `rotinas/:rotinaId/atividades/nova` (criar atividade), `rotinas/:rotinaId/atividades/:atividadeId/editar` (editar atividade).
+- `diarios.$diarioId._index.tsx`: cards de rotina agora sao clicaveis — o nome/icone linka para `/diarios/:diarioId/rotinas/:rotinaId` (kanban). Link "Editar" continua separado.
+- `diarios.$diarioId.rotinas.$rotinaId.tsx`: rota do kanban. Loader carrega rotina + todas as atividades + activity_days e agrupa por dia da semana. Action com intent `reorder` atualiza sort_order de activity_days para um dia especifico. O componente usa `useState(false)` + `useEffect` para renderizar o DragDropContext somente no client (evita erros SSR do @hello-pangea/dnd). Header mostra breadcrumb (Rotinas / icon+nome) e botao "+ Nova Atividade".
+- Componentes criados em `app/components/`: `KanbanBoard.tsx` (DragDropContext + fetcher para reorder otimista), `KanbanColumn.tsx` (Droppable + label do dia), `KanbanCard.tsx` (Draggable + info da atividade com icon, titulo, pontos, tipo, horario, link editar). Tipo `ActivityData` exportado de KanbanCard.tsx.
+- Kanban exibe 7 colunas na ordem Seg-Dom (dayOfWeek: 1,2,3,4,5,6,0). Drag-and-drop so funciona dentro da mesma coluna (reordenacao, nao mover entre dias). Reorder otimista via useFetcher.submit.
+- `diarios.$diarioId.rotinas.$rotinaId.atividades.nova.tsx`: form com campos titulo, icone (emoji), pontos, tipo (binary/incremental), horario (opcional), checkboxes para dias da semana (todos marcados por padrao). Action cria atividade + insere activity_days com sort_order = max+1 para cada dia selecionado. Redireciona para o kanban.
+- `diarios.$diarioId.rotinas.$rotinaId.atividades.$atividadeId.editar.tsx`: form pre-preenchido com dados atuais. Intents `update` (atualiza atividade + deleta/recria activity_days) e `delete` (cascade remove atividade + completions). Zona de perigo com confirmacao em 2 passos (mesmo padrao das outras edicoes).
+- Todas as rotas verificam ownership (tenant_id = userId) e pertencimento (routine.diary_id, activity.routine_id) em loaders e actions.
+- **Para a Etapa 8 (PWA)**: criar `public/manifest.json` com `display: standalone`, `start_url: /painel`, nome da app, icones e cores. Criar `public/sw.js` com service worker minimo (cache de assets estaticos). Adicionar meta tags PWA no `<head>` em `app/root.tsx` (`<link rel="manifest">`, `<meta name="theme-color">`, `<meta name="apple-mobile-web-app-capable">`, `<link rel="apple-touch-icon">`). Registrar o service worker em `app/entry.client.tsx` ou em `root.tsx` via `useEffect` (`navigator.serviceWorker.register('/sw.js')`). Testar no Chrome DevTools > Application > Manifest para validar instalacao PWA.
 
 ### Etapa 8 - PWA
 - manifest.json (display: standalone, start_url: /painel)

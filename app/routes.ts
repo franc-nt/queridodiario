@@ -12,8 +12,20 @@ export default [
       route("editar", "routes/diarios.$diarioId.editar.tsx"),
       route("rotinas/nova", "routes/diarios.$diarioId.rotinas.nova.tsx"),
       route(
+        "rotinas/:rotinaId",
+        "routes/diarios.$diarioId.rotinas.$rotinaId.tsx"
+      ),
+      route(
         "rotinas/:rotinaId/editar",
         "routes/diarios.$diarioId.rotinas.$rotinaId.editar.tsx"
+      ),
+      route(
+        "rotinas/:rotinaId/atividades/nova",
+        "routes/diarios.$diarioId.rotinas.$rotinaId.atividades.nova.tsx"
+      ),
+      route(
+        "rotinas/:rotinaId/atividades/:atividadeId/editar",
+        "routes/diarios.$diarioId.rotinas.$rotinaId.atividades.$atividadeId.editar.tsx"
       ),
     ]),
   ]),

@@ -162,12 +162,15 @@ export default function DiarioIndex() {
                 </Form>
               </div>
 
-              {/* Info da rotina */}
-              <div className="flex-1 min-w-0">
+              {/* Info da rotina — link para kanban */}
+              <Link
+                to={`/diarios/${diarioId}/rotinas/${routine.id}`}
+                className="flex-1 min-w-0 group"
+              >
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{routine.icon || "📋"}</span>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-violet-600 transition-colors">
                       {routine.name}
                     </h3>
                     <p className="text-xs text-gray-400">
@@ -175,7 +178,7 @@ export default function DiarioIndex() {
                     </p>
                   </div>
                 </div>
-              </div>
+              </Link>
 
               {/* Link para editar */}
               <Link
