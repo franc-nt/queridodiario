@@ -101,7 +101,7 @@ export default function DiarioIndex() {
   const isReordering = navigation.state === "submitting";
 
   return (
-    <div>
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">Rotinas</h2>
         <Link

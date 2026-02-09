@@ -164,18 +164,9 @@ export default function KanbanPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          <Link
-            to={`/diarios/${diarioId}`}
-            className="text-sm text-gray-500 hover:text-violet-600 transition-colors"
-          >
-            ← Rotinas
-          </Link>
-          <span className="text-gray-300">/</span>
-          <span className="text-lg font-semibold text-gray-900">
-            {routine.icon || "📋"} {routine.name}
-          </span>
-        </div>
+        <h2 className="text-xl font-bold text-gray-900">
+          {routine.icon || "📋"} {routine.name}
+        </h2>
         <Link
           to={`/diarios/${diarioId}/rotinas/${rotinaId}/atividades/nova`}
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl text-sm transition-colors"

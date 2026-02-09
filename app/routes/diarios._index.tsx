@@ -33,7 +33,7 @@ export default function DiariosIndex() {
   const { diaries } = useLoaderData<typeof loader>();
 
   return (
-    <div>
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Diários</h1>
         <Link

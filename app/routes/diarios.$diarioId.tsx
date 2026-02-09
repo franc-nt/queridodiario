@@ -33,7 +33,7 @@ export default function DiarioLayout() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
+      <div className="max-w-4xl mx-auto flex items-center gap-3 mb-6">
         <Link
           to="/diarios"
           className="text-sm text-gray-500 hover:text-violet-600 transition-colors"

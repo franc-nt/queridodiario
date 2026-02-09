@@ -18,7 +18,7 @@ export default function KanbanColumn({
   rotinaId,
 }: KanbanColumnProps) {
   return (
-    <div className="flex-shrink-0 w-40 bg-gray-50 rounded-xl p-3">
+    <div className="flex-1 min-w-0 bg-gray-50 rounded-xl p-3">
       <h3 className="text-sm font-bold text-gray-600 text-center mb-3">
         {dayLabel}
       </h3>
