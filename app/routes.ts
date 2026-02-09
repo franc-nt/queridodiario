@@ -32,4 +32,5 @@ export default [
   route("painel", "routes/painel.tsx"),
   route("api/painel", "routes/api.painel.tsx"),
   route("api/painel/complete", "routes/api.painel.complete.tsx"),
+  route("api/painel/notes", "routes/api.painel.notes.tsx"),
 ] satisfies RouteConfig;

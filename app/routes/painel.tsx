@@ -35,6 +35,7 @@ interface PanelData {
   dayOfWeek: number;
   routines: Routine[];
   totalPoints: number;
+  note: string;
 }
 
 const DAY_NAMES = [
@@ -273,6 +274,10 @@ export default function Painel() {
           <DaySummary
             routines={routinesWithActivities}
             totalPoints={data.totalPoints}
+            note={data.note}
+            date={data.date}
+            token={token!}
+            onNoteSaved={() => fetchData(data.date)}
           />
         ) : !viewingRoutine ? (
           <div className="text-center py-12">

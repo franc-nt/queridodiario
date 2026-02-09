@@ -12,6 +12,7 @@ import {
   activities,
   activityDays,
   completions,
+  dayNotes,
 } from "./schema";
 
 const DATABASE_URL = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
@@ -67,6 +68,7 @@ async function seedActivity(
 
 async function seed() {
   console.log("Limpando dados existentes...");
+  await db.delete(dayNotes);
   await db.delete(completions);
   await db.delete(activityDays);
   await db.delete(activities);

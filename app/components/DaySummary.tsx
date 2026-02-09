@@ -1,11 +1,16 @@
+import { useState, useEffect } from "react";
 import type { Routine } from "../routes/painel";
 
 interface Props {
   routines: Routine[];
   totalPoints: number;
+  note: string;
+  date: string;
+  token: string;
+  onNoteSaved: () => void;
 }
 
-export function DaySummary({ routines, totalPoints }: Props) {
+export function DaySummary({ routines, totalPoints, note, date, token, onNoteSaved }: Props) {
   const allBinary = routines.flatMap((r) =>
     r.activities.filter((a) => a.type === "binary")
   );
@@ -13,6 +18,39 @@ export function DaySummary({ routines, totalPoints }: Props) {
   const doneBinary = allBinary.filter(
     (a) => a.completions.length > 0 && a.completions[0].value > 0
   );
+
+  const [noteText, setNoteText] = useState(note);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Sync note text when prop changes (e.g. navigating days)
+  useEffect(() => {
+    setNoteText(note);
+    setSaved(false);
+  }, [note, date]);
+
+  const hasChanges = noteText !== note;
+
+  async function handleSaveNote() {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res = await fetch("/api/painel/notes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Access-Token": token,
+        },
+        body: JSON.stringify({ date, content: noteText }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        onNoteSaved();
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -145,6 +183,43 @@ export function DaySummary({ routines, totalPoints }: Props) {
           </div>
         </div>
       ))}
+
+      {/* Observações do dia */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 px-1">
+          <span className="text-lg">📝</span>
+          <h3 className="text-base font-bold text-gray-700">Observações do dia</h3>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 space-y-3">
+          <textarea
+            value={noteText}
+            onChange={(e) => {
+              setNoteText(e.target.value);
+              setSaved(false);
+            }}
+            placeholder="Anote observações sobre o dia..."
+            rows={4}
+            className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:border-violet-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-100 transition-colors"
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-400">
+              {saved ? "✓ Salvo" : hasChanges ? "Alterações não salvas" : ""}
+            </span>
+            <button
+              onClick={handleSaveNote}
+              disabled={saving || !hasChanges}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all touch-manipulation ${
+                saving || !hasChanges
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-violet-500 text-white hover:bg-violet-600 active:bg-violet-700"
+              }`}
+            >
+              {saving ? "Salvando..." : "Salvar"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

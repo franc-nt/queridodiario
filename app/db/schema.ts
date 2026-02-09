@@ -112,3 +112,22 @@ export const completions = pgTable(
     ),
   ],
 );
+
+// Notas/observacoes do dia
+export const dayNotes = pgTable(
+  "day_notes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    diaryId: uuid("diary_id")
+      .references(() => diaries.id, { onDelete: "cascade" })
+      .notNull(),
+    date: date("date").notNull(),
+    content: text("content").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("day_notes_diary_date_idx").on(table.diaryId, table.date),
+  ],
+);

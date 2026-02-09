@@ -6,6 +6,7 @@ import {
   activities,
   activityDays,
   completions,
+  dayNotes,
 } from "./schema";
 
 export const tenantsRelations = relations(tenants, ({ many }) => ({
@@ -19,6 +20,7 @@ export const diariesRelations = relations(diaries, ({ one, many }) => ({
   }),
   routines: many(routines),
   completions: many(completions),
+  dayNotes: many(dayNotes),
 }));
 
 export const routinesRelations = relations(routines, ({ one, many }) => ({
@@ -52,6 +54,13 @@ export const completionsRelations = relations(completions, ({ one }) => ({
   }),
   diary: one(diaries, {
     fields: [completions.diaryId],
+    references: [diaries.id],
+  }),
+}));
+
+export const dayNotesRelations = relations(dayNotes, ({ one }) => ({
+  diary: one(diaries, {
+    fields: [dayNotes.diaryId],
     references: [diaries.id],
   }),
 }));

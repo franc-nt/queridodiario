@@ -6,6 +6,7 @@ import {
   activities,
   activityDays,
   completions,
+  dayNotes,
 } from "../db/schema";
 import type { Route } from "./+types/api.painel";
 
@@ -114,6 +115,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     );
   }, 0);
 
+  // Fetch day note
+  const dayNote = await db.query.dayNotes.findFirst({
+    where: and(eq(dayNotes.diaryId, diary.id), eq(dayNotes.date, targetDate)),
+  });
+
   return Response.json({
     diary: {
       id: diary.id,
@@ -124,5 +130,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     dayOfWeek,
     routines: routinesData,
     totalPoints,
+    note: dayNote?.content ?? "",
   });
 }
