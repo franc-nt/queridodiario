@@ -114,6 +114,31 @@ export const completions = pgTable(
   ],
 );
 
+// Atividades extra (avulsas, por data especifica)
+export const extraActivities = pgTable(
+  "extra_activities",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    diaryId: uuid("diary_id")
+      .references(() => diaries.id, { onDelete: "cascade" })
+      .notNull(),
+    routineId: uuid("routine_id")
+      .references(() => routines.id, { onDelete: "cascade" })
+      .notNull(),
+    date: date("date").notNull(),
+    title: text("title").notNull(),
+    icon: text("icon").default("📌"),
+    points: integer("points").default(1).notNull(),
+    completionValue: integer("completion_value"), // null=pendente, >0=fez, <0=não fez, 0=pulou
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("extra_activities_diary_date_idx").on(table.diaryId, table.date),
+  ],
+);
+
 // Notas/observacoes do dia
 export const dayNotes = pgTable(
   "day_notes",

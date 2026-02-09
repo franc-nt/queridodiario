@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { createDb } from "../db/client";
-import { diaries, activities, completions } from "../db/schema";
+import { diaries, activities, completions, extraActivities } from "../db/schema";
 import type { Route } from "./+types/api.painel.complete";
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -25,15 +25,38 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   const body = await request.json();
-  const { activityId, date, value, comment } = body as {
+  const { activityId, date, value, comment, isExtra } = body as {
     activityId: string;
     date: string;
     value: number;
     comment?: string;
+    isExtra?: boolean;
   };
 
   if (!activityId || !date || value === undefined) {
     return Response.json({ error: "Dados incompletos" }, { status: 400 });
+  }
+
+  // Handle extra activity completion
+  if (isExtra) {
+    const extra = await db.query.extraActivities.findFirst({
+      where: and(
+        eq(extraActivities.id, activityId),
+        eq(extraActivities.diaryId, diary.id),
+      ),
+    });
+
+    if (!extra) {
+      return Response.json({ error: "Atividade extra invalida" }, { status: 404 });
+    }
+
+    const [updated] = await db
+      .update(extraActivities)
+      .set({ completionValue: value })
+      .where(eq(extraActivities.id, activityId))
+      .returning();
+
+    return Response.json({ completion: { id: updated.id, value: updated.completionValue } });
   }
 
   // Verify the activity belongs to this diary

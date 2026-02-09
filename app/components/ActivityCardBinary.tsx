@@ -25,7 +25,12 @@ export function ActivityCardBinary({
         "Content-Type": "application/json",
         "X-Access-Token": token,
       },
-      body: JSON.stringify({ activityId: activity.id, date, value }),
+      body: JSON.stringify({
+        activityId: activity.id,
+        date,
+        value,
+        ...(activity.isExtra && { isExtra: true }),
+      }),
     });
     onComplete();
   }

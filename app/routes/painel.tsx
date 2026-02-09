@@ -19,6 +19,7 @@ export interface Activity {
   type: "binary" | "incremental";
   scheduledTime: string | null;
   sortOrder: number;
+  isExtra?: boolean;
   completions: Completion[];
 }
 
@@ -68,6 +69,7 @@ export default function Painel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewingRoutineId, setViewingRoutineId] = useState<string | null>(null);
+  const [showExtraModal, setShowExtraModal] = useState(false);
 
   // Read token from hash on mount
   useEffect(() => {
@@ -184,6 +186,19 @@ export default function Painel() {
     fetchData(data!.date);
   }
 
+  async function handleCreateExtra(formData: { title: string; points: number; routineId: string }) {
+    await fetch("/api/painel/extra-activity", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Access-Token": token!,
+      },
+      body: JSON.stringify({ ...formData, date: data!.date }),
+    });
+    setShowExtraModal(false);
+    fetchData(data!.date);
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
@@ -196,7 +211,16 @@ export default function Painel() {
                 {data.diary.name}
               </h1>
             </div>
-            <PointsCounter points={data.totalPoints} />
+            <div className="flex items-center gap-2">
+              <PointsCounter points={data.totalPoints} />
+              <button
+                onClick={() => setShowExtraModal(true)}
+                className="h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-lg font-bold hover:bg-emerald-600 active:scale-95 transition-all touch-manipulation"
+                aria-label="Adicionar atividade extra"
+              >
+                +
+              </button>
+            </div>
           </div>
 
           {/* Date navigation */}
@@ -308,12 +332,108 @@ export default function Painel() {
         )}
       </main>
 
+      {/* Extra activity modal */}
+      {showExtraModal && (
+        <ExtraActivityModal
+          routines={data.routines}
+          onSubmit={handleCreateExtra}
+          onClose={() => setShowExtraModal(false)}
+        />
+      )}
+
       {/* Loading overlay for refetch */}
       {loading && data && (
         <div className="fixed inset-0 bg-white/50 flex items-center justify-center z-20">
           <div className="animate-spin h-6 w-6 border-3 border-violet-500 border-t-transparent rounded-full" />
         </div>
       )}
+    </div>
+  );
+}
+
+function ExtraActivityModal({
+  routines,
+  onSubmit,
+  onClose,
+}: {
+  routines: Routine[];
+  onSubmit: (data: { title: string; points: number; routineId: string }) => void;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [points, setPoints] = useState(1);
+  const [routineId, setRoutineId] = useState(routines[0]?.id ?? "");
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim() || !routineId) return;
+    onSubmit({ title: title.trim(), points, routineId });
+  }
+
+  return (
+    <div className="fixed inset-0 z-30 flex items-end sm:items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <form
+        onSubmit={handleSubmit}
+        className="relative bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-5 space-y-4"
+      >
+        <h3 className="text-lg font-bold text-gray-800">Atividade Extra</h3>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-600">Descrição</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ex: Passeio no parque"
+            autoFocus
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:border-violet-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-100"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-600">Pontos</label>
+          <input
+            type="number"
+            value={points}
+            onChange={(e) => setPoints(Math.max(0, parseInt(e.target.value) || 0))}
+            min={0}
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 focus:border-violet-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-100"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-600">Rotina</label>
+          <select
+            value={routineId}
+            onChange={(e) => setRoutineId(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 focus:border-violet-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-100"
+          >
+            {routines.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.icon} {r.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors touch-manipulation"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={!title.trim()}
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors touch-manipulation"
+          >
+            Adicionar
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

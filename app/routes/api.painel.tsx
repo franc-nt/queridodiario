@@ -7,6 +7,7 @@ import {
   activityDays,
   completions,
   dayNotes,
+  extraActivities,
 } from "../db/schema";
 import type { Route } from "./+types/api.painel";
 
@@ -84,6 +85,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
           type: activity.type,
           scheduledTime: activity.scheduledTime,
           sortOrder: dayInfo?.sortOrder ?? 0,
+          isExtra: false as boolean,
           completions: dayCompletions.map((c) => ({
             id: c.id,
             value: c.value,
@@ -102,6 +104,42 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       activities: dayActivities,
     };
   });
+
+  // Fetch extra activities for this date
+  const extras = await db.query.extraActivities.findMany({
+    where: and(
+      eq(extraActivities.diaryId, diary.id),
+      eq(extraActivities.date, targetDate),
+    ),
+  });
+
+  // Append extra activities to their respective routines
+  for (const extra of extras) {
+    const routine = routinesData.find((r) => r.id === extra.routineId);
+    if (routine) {
+      routine.activities.push({
+        id: extra.id,
+        title: extra.title,
+        icon: extra.icon ?? "📌",
+        points: extra.points,
+        type: "binary" as const,
+        scheduledTime: null,
+        sortOrder: 99999,
+        isExtra: true,
+        completions:
+          extra.completionValue !== null
+            ? [
+                {
+                  id: extra.id,
+                  value: extra.completionValue,
+                  comment: null,
+                  createdAt: extra.createdAt,
+                },
+              ]
+            : [],
+      });
+    }
+  }
 
   // Calculate total points for the day
   const totalPoints = routinesData.reduce((total, routine) => {
