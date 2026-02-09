@@ -42,6 +42,9 @@ export function ActivityCardIncremental({
   return (
     <div className="rounded-2xl border-2 border-gray-300 bg-white px-4 py-3">
       <div className="flex items-center gap-3">
+        {activity.icon && (
+          <span className="text-2xl shrink-0">{activity.icon}</span>
+        )}
         <div className="flex-1 min-w-0">
           <p className="text-base font-medium text-gray-800 truncate">
             {activity.scheduledTime && (

@@ -77,18 +77,18 @@ export function DaySummary({ routines, totalPoints }: Props) {
                     key={activity.id}
                     className="flex items-center gap-3 px-4 py-2.5"
                   >
-                    {/* Status indicator */}
-                    {isBinary ? (
-                      <span className="text-lg shrink-0">
-                        {isCompleted
-                          ? didIt
-                            ? "✅"
-                            : "❌"
-                          : "⬜"}
-                      </span>
-                    ) : (
-                      <span className="text-lg shrink-0">📊</span>
-                    )}
+                    {/* Activity icon + status */}
+                    <span className="text-lg shrink-0">
+                      {activity.icon
+                        ? activity.icon
+                        : isBinary
+                          ? isCompleted
+                            ? didIt
+                              ? "✅"
+                              : "❌"
+                            : "⬜"
+                          : "📊"}
+                    </span>
 
                     {/* Activity info */}
                     <div className="flex-1 min-w-0">

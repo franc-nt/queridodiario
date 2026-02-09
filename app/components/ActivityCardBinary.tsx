@@ -40,6 +40,9 @@ export function ActivityCardBinary({
           : "border-gray-300 bg-white"
       }`}
     >
+      {activity.icon && (
+        <span className="text-2xl shrink-0">{activity.icon}</span>
+      )}
       <p
         className={`flex-1 text-base font-medium min-w-0 truncate transition-all ${
           isCompleted ? "line-through text-gray-400" : "text-gray-800"
