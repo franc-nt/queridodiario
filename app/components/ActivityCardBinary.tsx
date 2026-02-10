@@ -63,7 +63,7 @@ export function ActivityCardBinary({
 
       <div className="flex items-center gap-2 shrink-0">
         <button
-          onClick={() => handleMark(activity.points)}
+          onClick={() => handleMark(activity.points || 1)}
           className={`h-12 w-12 rounded-full flex items-center justify-center text-2xl transition-all touch-manipulation ${
             isCompleted
               ? didIt
@@ -76,7 +76,7 @@ export function ActivityCardBinary({
           👍
         </button>
         <button
-          onClick={() => handleMark(-activity.points)}
+          onClick={() => handleMark(-(activity.points || 1))}
           className={`h-12 w-12 rounded-full flex items-center justify-center text-2xl transition-all touch-manipulation ${
             isCompleted
               ? !didIt && !isSkipped

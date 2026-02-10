@@ -146,10 +146,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return (
       total +
       routine.activities.reduce((rTotal, activity) => {
-        return (
-          rTotal +
-          activity.completions.reduce((cTotal, c) => cTotal + c.value, 0)
-        );
+        if (activity.type === "binary") {
+          const c = activity.completions[0];
+          if (!c) return rTotal;
+          return rTotal + (c.value > 0 ? activity.points : c.value < 0 ? -activity.points : 0);
+        }
+        return rTotal + activity.completions.reduce((cTotal, c) => cTotal + c.value, 0);
       }, 0)
     );
   }, 0);
