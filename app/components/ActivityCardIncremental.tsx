@@ -81,30 +81,32 @@ export function ActivityCardIncremental({
           )}
           <div className="flex-1 min-w-0">
             <p className="text-base font-medium text-gray-800 truncate">
-              {activity.scheduledTime && (
-                <span className="text-sm text-violet-400 font-normal">{activity.scheduledTime} · </span>
-              )}
-              {activity.title} ({activity.points} pontos)
+              {activity.title}
             </p>
-            {clickCount > 0 && (
-              <p className="text-sm text-violet-600 font-semibold tabular-nums">
-                {totalValue > 0 ? "+" : ""}
-                {totalValue} pts ({clickCount}x)
-              </p>
-            )}
+            <p className="text-xs text-gray-400 mt-0.5">
+              {activity.scheduledTime && (
+                <span className="text-violet-400">{activity.scheduledTime} · </span>
+              )}
+              {activity.points} pontos
+              {clickCount > 0 && (
+                <span className="text-violet-600 font-semibold ml-1.5">
+                  {totalValue > 0 ? "+" : ""}{totalValue} pts ({clickCount}x)
+                </span>
+              )}
+            </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => openPopup(true)}
-              className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 flex items-center justify-center text-white text-2xl font-bold transition-all touch-manipulation"
+              className="h-9 w-9 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-95 flex items-center justify-center text-white text-lg font-bold transition-all touch-manipulation"
               aria-label="Adicionar pontos"
             >
               +
             </button>
             <button
               onClick={() => openPopup(false)}
-              className="h-12 w-12 rounded-full bg-red-500 hover:bg-red-600 active:scale-95 flex items-center justify-center text-white text-2xl font-bold transition-all touch-manipulation"
+              className="h-9 w-9 rounded-full bg-red-700 hover:bg-red-800 active:scale-95 flex items-center justify-center text-white text-lg font-bold transition-all touch-manipulation"
               aria-label="Remover pontos"
             >
               −
