@@ -18,11 +18,12 @@ export function meta() {
 }
 
 export async function loader({ request, context, params }: Route.LoaderArgs) {
-  const userId = await requireAuth(
-    request,
-    context.cloudflare.env.SESSION_SECRET
-  );
   const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
+  const { id: userId } = await requireAuth(
+    request,
+    context.cloudflare.env.SESSION_SECRET,
+    db
+  );
 
   const [diary] = await db
     .select({
@@ -41,12 +42,20 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
   return { diary };
 }
 
+export const handle = {
+  crumb: (data: { diary: { id: string } }) => ({
+    label: "Editar",
+    href: `/diarios/${data.diary.id}/editar`,
+  }),
+};
+
 export async function action({ request, context, params }: Route.ActionArgs) {
-  const userId = await requireAuth(
-    request,
-    context.cloudflare.env.SESSION_SECRET
-  );
   const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
+  const { id: userId } = await requireAuth(
+    request,
+    context.cloudflare.env.SESSION_SECRET,
+    db
+  );
 
   const formData = await request.formData();
   const intent = formData.get("intent");

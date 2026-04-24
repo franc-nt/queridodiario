@@ -13,12 +13,23 @@ export function meta() {
   return [{ title: "Atividades - Querido Diário" }];
 }
 
+export const handle = {
+  crumb: (data: {
+    routine: { id: string; name: string; icon: string | null };
+    diarioId: string;
+  }) => ({
+    label: `${data.routine.icon || "📋"} ${data.routine.name}`,
+    href: `/diarios/${data.diarioId}/rotinas/${data.routine.id}`,
+  }),
+};
+
 export async function loader({ request, context, params }: Route.LoaderArgs) {
-  const userId = await requireAuth(
-    request,
-    context.cloudflare.env.SESSION_SECRET
-  );
   const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
+  const { id: userId } = await requireAuth(
+    request,
+    context.cloudflare.env.SESSION_SECRET,
+    db
+  );
 
   // Verify diary ownership
   const [diary] = await db
@@ -113,11 +124,12 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context, params }: Route.ActionArgs) {
-  const userId = await requireAuth(
-    request,
-    context.cloudflare.env.SESSION_SECRET
-  );
   const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
+  const { id: userId } = await requireAuth(
+    request,
+    context.cloudflare.env.SESSION_SECRET,
+    db
+  );
 
   // Verify ownership
   const [diary] = await db

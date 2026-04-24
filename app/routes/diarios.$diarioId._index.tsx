@@ -1,4 +1,11 @@
-import { Link, useLoaderData, Form, useNavigation } from "react-router";
+import {
+  Link,
+  useLoaderData,
+  useRouteLoaderData,
+  Form,
+  useNavigation,
+} from "react-router";
+import { useState } from "react";
 import type { Route } from "./+types/diarios.$diarioId._index";
 import { requireAuth } from "../lib/require-auth.server";
 import { createDb } from "../db/client";
@@ -10,11 +17,12 @@ export function meta() {
 }
 
 export async function loader({ request, context, params }: Route.LoaderArgs) {
-  const userId = await requireAuth(
-    request,
-    context.cloudflare.env.SESSION_SECRET
-  );
   const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
+  const { id: userId } = await requireAuth(
+    request,
+    context.cloudflare.env.SESSION_SECRET,
+    db
+  );
 
   const [diary] = await db
     .select({ id: diaries.id })
@@ -40,11 +48,12 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context, params }: Route.ActionArgs) {
-  const userId = await requireAuth(
-    request,
-    context.cloudflare.env.SESSION_SECRET
-  );
   const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
+  const { id: userId } = await requireAuth(
+    request,
+    context.cloudflare.env.SESSION_SECRET,
+    db
+  );
 
   // Verificar ownership
   const [diary] = await db
@@ -97,11 +106,60 @@ export async function action({ request, context, params }: Route.ActionArgs) {
 export default function DiarioIndex() {
   const { routines: routineList, diarioId } =
     useLoaderData<typeof loader>();
+  const parentData = useRouteLoaderData("routes/diarios.$diarioId") as
+    | { diary: { accessToken: string } }
+    | undefined;
+  const accessToken = parentData?.diary.accessToken;
   const navigation = useNavigation();
   const isReordering = navigation.state === "submitting";
+  const [copied, setCopied] = useState(false);
+
+  const panelUrl = accessToken
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/painel#token=${accessToken}`
+    : "";
+
+  const handleCopy = async () => {
+    if (!panelUrl) return;
+    try {
+      await navigator.clipboard.writeText(panelUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const input = document.getElementById(
+        "panel-link-header"
+      ) as HTMLInputElement | null;
+      if (input) input.select();
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
+      {accessToken && (
+        <div className="mb-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-4">
+            <p className="text-xs text-gray-500 mb-2">
+              Link de acesso ao painel (sem login)
+            </p>
+            <div className="flex gap-2 items-center">
+              <input
+                id="panel-link-header"
+                type="text"
+                readOnly
+                value={panelUrl}
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs text-gray-600 bg-gray-50 truncate"
+              />
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="px-4 py-2 bg-violet-100 hover:bg-violet-200 text-violet-700 font-medium rounded-lg text-sm transition-colors cursor-pointer whitespace-nowrap"
+              >
+                {copied ? "Copiado!" : "Copiar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">Rotinas</h2>
         <Link

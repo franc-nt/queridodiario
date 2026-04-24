@@ -30,6 +30,12 @@ export default [
       ),
     ]),
   ]),
+  route("admin", "routes/admin.tsx", [
+    index("routes/admin._index.tsx"),
+    route("usuarios/novo", "routes/admin.usuarios.novo.tsx"),
+    route("usuarios/:userId/editar", "routes/admin.usuarios.$userId.editar.tsx"),
+    route("usuarios/:userId/senha", "routes/admin.usuarios.$userId.senha.tsx"),
+  ]),
   route("painel", "routes/painel.tsx"),
   route("api/painel", "routes/api.painel.tsx"),
   route("api/painel/complete", "routes/api.painel.complete.tsx"),

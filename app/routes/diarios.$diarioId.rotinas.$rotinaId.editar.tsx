@@ -18,11 +18,12 @@ export function meta() {
 }
 
 export async function loader({ request, context, params }: Route.LoaderArgs) {
-  const userId = await requireAuth(
-    request,
-    context.cloudflare.env.SESSION_SECRET
-  );
   const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
+  const { id: userId } = await requireAuth(
+    request,
+    context.cloudflare.env.SESSION_SECRET,
+    db
+  );
 
   // Verificar ownership do diário
   const [diary] = await db
@@ -56,12 +57,29 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
   return { routine, diarioId: params.diarioId };
 }
 
+export const handle = {
+  crumb: (data: {
+    routine: { id: string; name: string; icon: string | null };
+    diarioId: string;
+  }) => [
+    {
+      label: `${data.routine.icon || "📋"} ${data.routine.name}`,
+      href: `/diarios/${data.diarioId}/rotinas/${data.routine.id}`,
+    },
+    {
+      label: "Editar",
+      href: `/diarios/${data.diarioId}/rotinas/${data.routine.id}/editar`,
+    },
+  ],
+};
+
 export async function action({ request, context, params }: Route.ActionArgs) {
-  const userId = await requireAuth(
-    request,
-    context.cloudflare.env.SESSION_SECRET
-  );
   const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
+  const { id: userId } = await requireAuth(
+    request,
+    context.cloudflare.env.SESSION_SECRET,
+    db
+  );
 
   // Verificar ownership do diário
   const [diary] = await db
@@ -121,13 +139,6 @@ export default function EditarRotina() {
 
   return (
     <div className="max-w-md mx-auto">
-      <Link
-        to={`/diarios/${diarioId}`}
-        className="text-sm text-gray-500 hover:text-violet-600 transition-colors mb-4 inline-block"
-      >
-        ← Voltar
-      </Link>
-
       <h2 className="text-xl font-bold text-gray-900 mb-6">Editar Rotina</h2>
 
       {/* Formulário de edição */}

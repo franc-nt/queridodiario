@@ -83,6 +83,7 @@ async function seed() {
       email: "francisconetoemail@gmail.com",
       passwordHash: hashSync("teste123", 10),
       name: "Francisco",
+      isAdmin: true,
     })
     .returning();
 

@@ -27,11 +27,12 @@ export function meta() {
 }
 
 export async function action({ request, context, params }: Route.ActionArgs) {
-  const userId = await requireAuth(
-    request,
-    context.cloudflare.env.SESSION_SECRET
-  );
   const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
+  const { id: userId } = await requireAuth(
+    request,
+    context.cloudflare.env.SESSION_SECRET,
+    db
+  );
 
   // Verify ownership
   const [diary] = await db

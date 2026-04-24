@@ -8,6 +8,7 @@ import {
   pgEnum,
   primaryKey,
   index,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 // Enum para tipo de atividade
@@ -23,6 +24,9 @@ export const tenants = pgTable("tenants", {
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
   plan: text("plan").default("free").notNull(),
+  isAdmin: boolean("is_admin").default(false).notNull(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

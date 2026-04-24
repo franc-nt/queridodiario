@@ -1,5 +1,5 @@
 import { compare } from "bcrypt-ts";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { tenants } from "../db/schema";
 import type { SessionStorage } from "./sessions.server";
@@ -8,9 +8,9 @@ export async function login(
   db: Database,
   email: string,
   password: string
-): Promise<{ id: string; name: string; email: string } | null> {
+): Promise<{ id: string; name: string; email: string; isAdmin: boolean } | null> {
   const tenant = await db.query.tenants.findFirst({
-    where: eq(tenants.email, email),
+    where: and(eq(tenants.email, email), isNull(tenants.deletedAt)),
   });
 
   if (!tenant) return null;
@@ -18,7 +18,12 @@ export async function login(
   const valid = await compare(password, tenant.passwordHash);
   if (!valid) return null;
 
-  return { id: tenant.id, name: tenant.name, email: tenant.email };
+  return {
+    id: tenant.id,
+    name: tenant.name,
+    email: tenant.email,
+    isAdmin: tenant.isAdmin,
+  };
 }
 
 export async function getUserId(
