@@ -3,16 +3,18 @@ import {
   Form,
   Link,
   useActionData,
-  useLoaderData,
   useNavigation,
 } from "react-router";
-import type { Route } from "./+types/login";
+import { hashSync } from "bcrypt-ts";
+import { eq } from "drizzle-orm";
+import type { Route } from "./+types/cadastro";
 import { createDb } from "../db/client";
+import { tenants } from "../db/schema";
 import { createSessionStorage } from "../lib/sessions.server";
-import { login, createUserSession, getUserId } from "../lib/auth.server";
+import { getUserId } from "../lib/auth.server";
 
 export function meta() {
-  return [{ title: "Login - Querido Diário" }];
+  return [{ title: "Criar conta - Querido Diário" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -21,35 +23,44 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   );
   const userId = await getUserId(request, sessionStorage);
   if (userId) throw redirect("/diarios");
-  const justSignedUp =
-    new URL(request.url).searchParams.get("cadastrado") === "1";
-  return { justSignedUp };
+  return null;
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
   const formData = await request.formData();
+  const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
 
-  if (!email || !password) {
-    return { error: "Preencha email e senha." };
+  if (!name || !email || !password || !passwordConfirm) {
+    return { error: "Preencha todos os campos." };
+  }
+
+  if (password !== passwordConfirm) {
+    return { error: "As senhas não conferem." };
   }
 
   const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
-  const user = await login(db, email, password);
 
-  if (!user) {
-    return { error: "Email ou senha incorretos." };
+  const existing = await db.query.tenants.findFirst({
+    where: eq(tenants.email, email),
+  });
+
+  if (existing) {
+    return { error: "Este email já está cadastrado." };
   }
 
-  const sessionStorage = createSessionStorage(
-    context.cloudflare.env.SESSION_SECRET
-  );
-  return createUserSession(sessionStorage, user.id, "/diarios");
+  await db.insert(tenants).values({
+    name,
+    email,
+    passwordHash: hashSync(password, 10),
+  });
+
+  throw redirect("/login?cadastrado=1");
 }
 
-export default function LoginPage() {
-  const { justSignedUp } = useLoaderData<typeof loader>();
+export default function CadastroPage() {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
@@ -59,21 +70,30 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">📒 Querido Diário</h1>
-          <p className="text-gray-500 mt-2">Acesse sua conta</p>
+          <p className="text-gray-500 mt-2">Crie sua conta</p>
         </div>
 
         <Form method="post" className="bg-white rounded-2xl shadow-lg p-6 space-y-5">
-          {justSignedUp && !actionData?.error && (
-            <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg text-sm font-medium">
-              Conta criada com sucesso! Faça login para continuar.
-            </div>
-          )}
-
           {actionData?.error && (
             <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm font-medium">
               {actionData.error}
             </div>
           )}
+
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Nome
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-gray-900 placeholder-gray-400"
+              placeholder="Seu nome"
+            />
+          </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -98,7 +118,22 @@ export default function LoginPage() {
               id="password"
               name="password"
               type="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-gray-900 placeholder-gray-400"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="passwordConfirm" className="block text-sm font-medium text-gray-700 mb-1">
+              Confirmar senha
+            </label>
+            <input
+              id="passwordConfirm"
+              name="passwordConfirm"
+              type="password"
+              autoComplete="new-password"
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-gray-900 placeholder-gray-400"
               placeholder="••••••••"
@@ -110,13 +145,13 @@ export default function LoginPage() {
             disabled={isSubmitting}
             className="w-full py-3 px-4 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white font-semibold rounded-xl transition-colors cursor-pointer"
           >
-            {isSubmitting ? "Entrando..." : "Entrar"}
+            {isSubmitting ? "Cadastrando..." : "Cadastrar"}
           </button>
 
           <p className="text-center text-sm text-gray-500">
-            Ainda não tem conta?{" "}
-            <Link to="/cadastro" className="text-violet-600 hover:text-violet-700 font-medium">
-              Criar conta
+            Já tem uma conta?{" "}
+            <Link to="/login" className="text-violet-600 hover:text-violet-700 font-medium">
+              Entrar
             </Link>
           </p>
         </Form>
