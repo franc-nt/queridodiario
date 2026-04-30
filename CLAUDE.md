@@ -15,9 +15,20 @@ npm run deploy         # build + wrangler deploy
 npm run typecheck      # cf-typegen + react-router typegen + tsc
 npm run db:generate    # gera migrations (drizzle-kit)
 npm run db:push        # aplica migrations no banco
-npm run db:seed        # seed com dados de teste (imprime token do painel)
+npm run db:seed        # ⚠️ DESTRUTIVO — apaga TUDO e recria (ver "Regras de banco")
 npm run db:studio      # GUI do Drizzle
 ```
+
+## ⚠️ Regras de banco (LER ANTES DE TOCAR EM DADOS)
+
+**NUNCA apagar dados do banco.** O banco de produção e o banco local compartilham a mesma NEON_DATABASE_URL — não existe "ambiente de teste" separado.
+
+- **NUNCA rodar `npm run db:seed`.** O script atual faz `DELETE` em todas as tabelas (completions, dayNotes, extraActivities, activities, activityDays, routines, diaries, tenants) e recria do zero. Isso já apagou dados reais uma vez. Se precisar popular algo, faça um **seed incremental** via SQL direto ou script que só usa `INSERT ... ON CONFLICT DO NOTHING` / `INSERT` de registros novos, sem nenhum `DELETE` ou `TRUNCATE`.
+- **Nunca executar** `DELETE`, `DROP`, `TRUNCATE` sem autorização explícita e por escrito do usuário para aquela execução específica. Autorização para uma operação não se estende a outras.
+- **Migrations (`db:push`, `db:generate`) podem ser rodadas** — elas são aditivas; mas antes de aplicar uma migration que renomeia/remove coluna ou muda tipo, confirmar com o usuário.
+- **Soft delete, não hard delete.** Tenants usam `deletedAt` (coluna adicionada em 2026-04); para qualquer nova entidade "descartável", seguir o mesmo padrão.
+- **Token de acesso do painel** do diário (`diaries.accessToken`) é sensível: se recriado, os links antigos param de funcionar. Nunca regenerar sem o usuário pedir.
+- Para testar fluxos novos com dados novos, **criar um registro novo via UI ou INSERT pontual** — jamais resetar o banco.
 
 ## Arquitetura
 
@@ -59,7 +70,7 @@ const db = createDb(context.cloudflare.env.NEON_DATABASE_URL);
 - Token do painel fica no **hash** da URL (`#token=`), nunca na query string — por segurança
 - Usar `bcrypt-ts` (edge-compatible), NUNCA bcrypt nativo
 - `activityDays` tem `sortOrder` **por dia da semana**, não global — mesmo activity pode ter ordem diferente em dias diferentes
-- Seed deleta tabelas em ordem reversa de dependência (completions → tenants)
+- Seed é destrutivo — ver a seção "Regras de banco" acima. **Não rodar.**
 
 ## Status do projeto
 
