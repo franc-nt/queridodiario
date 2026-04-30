@@ -16,7 +16,7 @@ import {
   activities,
   activityDays,
 } from "../db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 
 const DAYS = [
   { value: 1, label: "Seg" },
@@ -171,12 +171,30 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     .set({ title, icon, points, type, scheduledTime })
     .where(eq(activities.id, params.atividadeId));
 
-  // Delete old activity_days and insert new ones
-  await db
-    .delete(activityDays)
+  // Sync activity_days incrementally to preserve sortOrder of unchanged days
+  const existingRows = await db
+    .select({ dayOfWeek: activityDays.dayOfWeek })
+    .from(activityDays)
     .where(eq(activityDays.activityId, params.atividadeId));
 
-  for (const day of selectedDays) {
+  const existingSet = new Set(existingRows.map((r) => r.dayOfWeek));
+  const selectedSet = new Set(selectedDays);
+
+  const daysToRemove = [...existingSet].filter((d) => !selectedSet.has(d));
+  const daysToAdd = [...selectedSet].filter((d) => !existingSet.has(d));
+
+  if (daysToRemove.length > 0) {
+    await db
+      .delete(activityDays)
+      .where(
+        and(
+          eq(activityDays.activityId, params.atividadeId),
+          inArray(activityDays.dayOfWeek, daysToRemove)
+        )
+      );
+  }
+
+  for (const day of daysToAdd) {
     const [maxOrder] = await db
       .select({
         max: sql<number>`coalesce(max(${activityDays.sortOrder}), -1)`,
