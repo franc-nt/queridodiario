@@ -215,7 +215,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     });
   }
 
-  return { success: true };
+  throw redirect(`/diarios/${params.diarioId}/rotinas/${params.rotinaId}`);
 }
 
 export default function EditarAtividade() {
@@ -247,11 +247,6 @@ export default function EditarAtividade() {
         {actionData?.error && (
           <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm font-medium">
             {actionData.error}
-          </div>
-        )}
-        {actionData?.success && (
-          <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg text-sm font-medium">
-            Atividade atualizada com sucesso!
           </div>
         )}
 
